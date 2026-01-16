@@ -9,10 +9,10 @@ import {
   BookOpen,
   Clock,
 } from 'lucide-react';
-import { cn, getRiskColorClass, formatDate, getRiskLabel } from '@/lib/utils';
+import { cn, getRiskColorClass, formatDate, getRiskLabel } from '../lib/utils';
 import { RiskScoreGauge, RiskScoreBar, RiskBadge } from './RiskScore';
 import { ClauseList } from './ClauseCard';
-import type { RiskReport, CategoryRisk } from '@/lib/api';
+import type { RiskReport, CategoryRisk } from '../lib/api';
 
 interface RiskReportViewProps {
   report: RiskReport;
