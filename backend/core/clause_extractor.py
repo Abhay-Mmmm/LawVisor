@@ -21,7 +21,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from groq import AsyncGroq
+from openai import AsyncOpenAI
 
 from core.config import CLAUSE_TYPES, get_settings
 from core.ocr import DocumentContent
@@ -161,9 +161,12 @@ class ClauseExtractor:
         self._init_llm_client()
         
     def _init_llm_client(self):
-        """Initialize the Groq LLM client."""
-        self.llm_client = AsyncGroq(api_key=self.settings.groq_api_key)
-        self.model = self.settings.llm_model or "llama-3.3-70b-versatile"
+        """Initialize the OpenAI LLM client."""
+        self.llm_client = AsyncOpenAI(
+            api_key=self.settings.openai_api_key,
+            timeout=300.0  # 5 minutes per request
+        )
+        self.model = self.settings.llm_model or "gpt-4o-mini"
     
     async def extract_clauses(
         self, 
@@ -188,20 +191,39 @@ class ClauseExtractor:
         all_clauses = []
         all_warnings = []
         
-        # Process in batches to handle large documents
+        # Process in batches concurrently
         batch_size = 5
+        batches = []
         for i in range(0, len(segments), batch_size):
-            batch = segments[i:i + batch_size]
+            batch_segments = segments[i:i + batch_size]
             batch_text = "\n\n---\n\n".join(
-                f"[Page {s['page']}]\n{s['text']}" for s in batch
+                f"[Page {s['page']}]\n{s['text']}" for s in batch_segments
             )
-            
-            clauses, warnings = await self._extract_clauses_with_llm(
-                batch_text, 
-                document.document_id,
-                start_index=len(all_clauses)
-            )
-            
+            batches.append((batch_text, i))
+
+        logger.info(f"Processing {len(batches)} batches concurrently (limit: 5)...")
+        
+        semaphore = asyncio.Semaphore(5)  # Limit concurrent requests to avoid rate limits
+        
+        async def process_batch(batch_text: str, index: int, batch_num: int, total: int):
+            async with semaphore:
+                logger.info(f"Processing batch {batch_num}/{total} with LLM...")
+                clauses, warnings = await self._extract_clauses_with_llm(
+                    batch_text, 
+                    document.document_id,
+                    start_index=index
+                )
+                logger.info(f"Batch {batch_num}/{total} complete. Found {len(clauses)} clauses.")
+                return clauses, warnings
+
+        tasks = [
+            process_batch(b[0], b[1], idx + 1, len(batches)) 
+            for idx, b in enumerate(batches)
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        
+        for clauses, warnings in results:
             all_clauses.extend(clauses)
             all_warnings.extend(warnings)
         
@@ -306,7 +328,8 @@ class ClauseExtractor:
 Provide your response as valid JSON only, no additional text."""
 
         try:
-            # Use Groq for clause extraction
+            logger.info(f"Using OpenAI LLM ({self.model}) to extract clauses from batch...")
+            # Use OpenAI for clause extraction
             response = await self.llm_client.chat.completions.create(
                 model=self.model,
                 messages=[

@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from groq import AsyncGroq
+from openai import AsyncOpenAI
 from pinecone import Pinecone
 from sentence_transformers import SentenceTransformer
 
@@ -156,9 +156,12 @@ class RAGEngine:
     
     def _init_clients(self):
         """Initialize LLM and embedding clients."""
-        # Groq client for LLM
-        self.llm_client = AsyncGroq(api_key=self.settings.groq_api_key)
-        self.llm_model = self.settings.llm_model or "llama-3.3-70b-versatile"
+        # OpenAI client for LLM with increased timeout
+        self.llm_client = AsyncOpenAI(
+            api_key=self.settings.openai_api_key,
+            timeout=300.0  # 5 minutes per request
+        )
+        self.llm_model = self.settings.llm_model or "gpt-4o-mini"
         
         # Local embedding model (sentence-transformers)
         # Using all-MiniLM-L6-v2 which produces 384-dim embeddings
@@ -386,7 +389,8 @@ Text: {clause.normalized_text}
 Provide your compliance analysis as JSON."""
 
         try:
-            # Use Groq for LLM analysis
+            logger.info(f"Using OpenAI LLM ({self.llm_model}) to analyze clause {clause.clause_id}...")
+            # Use OpenAI for LLM analysis
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=[

@@ -113,7 +113,7 @@ export default function Home() {
                   </button>
                 )}
                 <a
-                  href="https://github.com"
+                  href="https://github.com/Abhay-Mmmm/LawVisor"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-gray-600"

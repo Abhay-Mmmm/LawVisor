@@ -25,13 +25,13 @@ class Settings(BaseSettings):
         extra="ignore"
     )
     
-    # === API Keys (Groq & Pinecone) ===
-    groq_api_key: str = Field(default="", description="Groq API key for Llama/Mixtral")
+    # === API Keys (OpenAI & Pinecone) ===
+    openai_api_key: str = Field(default="", description="OpenAI API key")
     
     # === LLM Configuration ===
     llm_model: str = Field(
-        default="llama-3.3-70b-versatile",
-        description="Groq model identifier"
+        default="gpt-4o-mini",
+        description="OpenAI model identifier"
     )
     
     # === Vector Database (Pinecone) ===
@@ -79,8 +79,8 @@ class Settings(BaseSettings):
     
     def validate_llm_config(self) -> None:
         """Validate that the required API keys are set."""
-        if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY is required")
+        if not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is required")
         if not self.pinecone_api_key:
             raise ValueError("PINECONE_API_KEY is required")
 
