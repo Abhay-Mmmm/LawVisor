@@ -248,7 +248,7 @@ lawvisor/
 ### AI & ML
 | Component | Technology |
 |-----------|------------|
-| LLM | Groq (Llama 3.3 70B / Mixtral) |
+| LLM | OpenAI (GPT-4o / GPT-4o-mini) |
 | OCR | pytesseract, OpenCV, pdfplumber |
 | Embeddings | sentence-transformers (local) |
 | Vector DB | Pinecone |
@@ -343,7 +343,7 @@ GET /health
 - Python 3.10+
 - Node.js 18+
 - Tesseract OCR
-- API keys: OpenAI/Anthropic + Pinecone
+- API keys: OpenAI + Pinecone
 
 ### Backend Setup
 
@@ -398,8 +398,8 @@ Visit `http://localhost:3000` to access the application.
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GROQ_API_KEY` | Groq API key for Llama/Mixtral | Yes |
-| `LLM_MODEL` | Model identifier (default: `llama-3.3-70b-versatile`) | No |
+| `OPENAI_API_KEY` | OpenAI API key | Yes |
+| `LLM_MODEL` | Model identifier (default: `gpt-4o-mini`) | No |
 | `PINECONE_API_KEY` | Pinecone vector DB key | Yes |
 | `PINECONE_ENVIRONMENT` | Pinecone environment | Yes |
 | `TESSERACT_PATH` | Path to Tesseract binary | Yes |
