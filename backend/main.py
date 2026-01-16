@@ -213,8 +213,8 @@ async def health_check() -> HealthCheckResponse:
         "llm": "unknown"  # Would check API connectivity in production
     }
     
-    # Check if LLM is configured (Groq)
-    if settings.groq_api_key:
+    # Check if LLM is configured (OpenAI)
+    if settings.openai_api_key:
         services["llm"] = "configured"
     else:
         services["llm"] = "not_configured"
