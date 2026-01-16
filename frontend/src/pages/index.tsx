@@ -14,13 +14,13 @@ import {
   FileUpload,
   RiskReportView,
   AnalysisLoading,
-} from '../components';
+} from '@/components';
 import {
   UploadResponse,
   RiskReport,
   analyzeDocument,
   getErrorMessage,
-} from '../lib/api';
+} from '@/lib/api';
 
 type AppState = 'upload' | 'analyzing' | 'results' | 'error';
 

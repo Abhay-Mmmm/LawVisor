@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn, getRiskColorClass } from '../lib/utils';
+import { cn, getRiskColorClass } from '@/lib/utils';
 
 interface RiskScoreGaugeProps {
   score: number;

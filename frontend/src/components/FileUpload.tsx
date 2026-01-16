@@ -3,8 +3,8 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { cn, formatBytes } from '../lib/utils';
-import { uploadDocument, UploadResponse, getErrorMessage } from '../lib/api';
+import { cn, formatBytes } from '@/lib/utils';
+import { uploadDocument, UploadResponse, getErrorMessage } from '@/lib/api';
 
 interface FileUploadProps {
   onUploadComplete: (response: UploadResponse) => void;
