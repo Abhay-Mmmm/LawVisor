@@ -8,9 +8,9 @@ import {
   ExternalLink,
   Lightbulb,
 } from 'lucide-react';
-import { cn, getRiskColorClass, formatClauseType, truncateText } from '@/lib/utils';
+import { cn, getRiskColorClass, formatClauseType, truncateText } from '../lib/utils';
 import { RiskBadge, RiskScoreBar } from './RiskScore';
-import type { ClauseRisk } from '@/lib/api';
+import type { ClauseRisk } from '../lib/api';
 
 interface ClauseCardProps {
   clause: ClauseRisk;
