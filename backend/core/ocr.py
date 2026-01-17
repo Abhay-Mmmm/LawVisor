@@ -151,12 +151,11 @@ class OCRProcessor:
     async def _detect_document_type(self, file_path: Path) -> DocumentType:
         """
         Detect whether a PDF is native text, scanned, or hybrid.
-        
-        Uses text extraction ratio to determine type:
-        - >80% extractable text = Native
-        - <20% extractable text = Scanned
-        - Between = Hybrid
         """
+        return await asyncio.to_thread(self._detect_document_type_sync, file_path)
+
+    def _detect_document_type_sync(self, file_path: Path) -> DocumentType:
+        """Synchronous implementation of document type detection."""
         try:
             reader = PdfReader(str(file_path))
             total_chars = 0
@@ -183,31 +182,45 @@ class OCRProcessor:
     
     async def _extract_native_pdf(self, file_path: Path) -> list[PageContent]:
         """Extract text from a native text-based PDF using pdfplumber."""
+        return await asyncio.to_thread(self._extract_native_pdf_sync, file_path)
+
+    def _extract_native_pdf_sync(self, file_path: Path) -> list[PageContent]:
+        """Synchronous implementation of native PDF extraction."""
         pages = []
+        logger.info(f"Starting native extraction for {file_path}")
         
-        with pdfplumber.open(str(file_path)) as pdf:
-            for page_num, page in enumerate(pdf.pages, start=1):
-                # Extract main text
-                text = page.extract_text() or ""
-                
-                # Extract tables
-                tables = self._extract_tables(page)
-                
-                # Extract headers and footnotes
-                headers = self._extract_headers(text)
-                footnotes = self._extract_footnotes(text)
-                
-                pages.append(PageContent(
-                    page_number=page_num,
-                    text=text,
-                    tables=tables,
-                    headers=headers,
-                    footnotes=footnotes,
-                    confidence=1.0,  # Native PDFs have perfect confidence
-                    is_scanned=False
-                ))
-        
-        return pages
+        try:
+            with pdfplumber.open(str(file_path)) as pdf:
+                logger.info(f"PDF opened. Total pages: {len(pdf.pages)}")
+                for page_num, page in enumerate(pdf.pages, start=1):
+                    # Extract main text
+                    text = page.extract_text() or ""
+                    
+                    # Extract tables
+                    tables = self._extract_tables(page)
+                    
+                    # Extract headers and footnotes
+                    headers = self._extract_headers(text)
+                    footnotes = self._extract_footnotes(text)
+                    
+                    pages.append(PageContent(
+                        page_number=page_num,
+                        text=text,
+                        tables=tables,
+                        headers=headers,
+                        footnotes=footnotes,
+                        confidence=1.0,  # Native PDFs have perfect confidence
+                        is_scanned=False
+                    ))
+                    if page_num % 5 == 0:
+                        logger.info(f"Processed {page_num} pages...")
+            
+            logger.info(f"Native extraction complete. Extracted {len(pages)} pages.")
+            return pages
+        except Exception as e:
+            logger.error(f"Error in native extraction: {e}")
+            raise e
+
     
     async def _extract_scanned_pdf(self, file_path: Path) -> list[PageContent]:
         """Extract text from a scanned PDF using OCR."""
