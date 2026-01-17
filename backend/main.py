@@ -170,6 +170,8 @@ app.add_middleware(
         "http://localhost:3000",  # Next.js dev server
         "http://localhost:3001",
         "https://*.vercel.app",   # Vercel deployments
+        "https://*.netlify.app",  # Netlify deployments
+        "*",                      # Allow all for development/testing
     ],
     allow_credentials=True,
     allow_methods=["*"],
