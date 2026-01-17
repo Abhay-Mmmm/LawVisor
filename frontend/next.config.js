@@ -4,12 +4,8 @@ const nextConfig = {
   // API proxy for development
   async rewrites() {
     return [
-      {
-        source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL 
-          ? `${process.env.NEXT_PUBLIC_API_URL}/:path*` 
-          : 'http://localhost:8000/:path*',
-      },
+      // Removed API rewrites to force direct connection to backend
+      // This prevents Netlify 10s timeout on proxy
     ];
   },
 };
