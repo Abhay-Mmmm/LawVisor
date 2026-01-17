@@ -3,19 +3,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 *.pdf
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
+# lib/ - Removed this line to allow frontend/src/lib
 lib64/
 parts/
 sdist/
