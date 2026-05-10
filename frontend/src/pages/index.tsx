@@ -56,6 +56,8 @@ export default function Home() {
         setAppState('results');
       } else if (analysisResult.status === 'failed') {
         throw new Error(analysisResult.error_message || 'Analysis failed');
+      } else {
+        throw new Error(`Unexpected analysis status: ${analysisResult.status}`);
       }
     } catch (err) {
       const message = getErrorMessage(err);

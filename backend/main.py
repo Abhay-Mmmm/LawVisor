@@ -87,22 +87,34 @@ async def lifespan(app: FastAPI):
     """
     logger.info("Starting LawVisor API", version="1.0.0")
     
-    # Validate configuration
+    # Validate configuration — exit immediately if keys are missing
     try:
         settings.validate_llm_config()
         logger.info("Configuration validated successfully")
     except ValueError as e:
-        logger.error("Configuration error", error=str(e))
-        # Continue startup but log warning
-    
+        logger.error("Configuration error — shutting down", error=str(e))
+        sys.exit(1)
+
     # Ensure upload directory exists
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Upload directory ready", path=str(settings.upload_dir))
-    
-    # Ensure cache directory exists
-    cache_dir = Path("./cache/regulations")
+
+    # Ensure cache directory exists (absolute path anchored to upload_dir parent)
+    cache_dir = settings.upload_dir.parent / "cache" / "regulations"
     cache_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Cache directory ready", path=str(cache_dir))
+
+    # Populate Pinecone with regulation embeddings (idempotent upsert)
+    try:
+        from core.rag_engine import RAGEngine
+        rag_engine = RAGEngine()
+        await rag_engine.index_regulations()
+        logger.info("Regulations indexed in vector database")
+    except Exception as e:
+        logger.warning(
+            "Could not index regulations — RAG analysis will return empty results",
+            error=str(e)
+        )
     
     yield
     
@@ -171,7 +183,6 @@ app.add_middleware(
         "http://localhost:3001",
         "https://*.vercel.app",   # Vercel deployments
         "https://*.netlify.app",  # Netlify deployments
-        "*",                      # Allow all for development/testing
     ],
     allow_credentials=True,
     allow_methods=["*"],

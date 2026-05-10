@@ -14,10 +14,10 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Mock environment variables before importing app
-os.environ.setdefault("GROQ_API_KEY", "test-groq-key")
+os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
 os.environ.setdefault("PINECONE_API_KEY", "test-pinecone-key")
 os.environ.setdefault("PINECONE_ENVIRONMENT", "test-env")
-os.environ.setdefault("LLM_MODEL", "llama-3.3-70b-versatile")
+os.environ.setdefault("LLM_MODEL", "gpt-4o-mini")
 os.environ.setdefault("TESSERACT_PATH", "/usr/bin/tesseract")
 
 
@@ -25,10 +25,10 @@ os.environ.setdefault("TESSERACT_PATH", "/usr/bin/tesseract")
 def mock_settings():
     """Mock settings for testing."""
     with patch.dict(os.environ, {
-        "GROQ_API_KEY": "test-groq-key",
+        "OPENAI_API_KEY": "test-openai-key",
         "PINECONE_API_KEY": "test-pinecone-key",
         "PINECONE_ENVIRONMENT": "test-env",
-        "LLM_MODEL": "llama-3.3-70b-versatile",
+        "LLM_MODEL": "gpt-4o-mini",
         "TESSERACT_PATH": "/usr/bin/tesseract",
     }):
         yield

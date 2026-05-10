@@ -87,9 +87,9 @@ class TestRiskLevelClassification:
     """Tests for risk level classification."""
     
     @pytest.mark.parametrize("score,expected_level", [
-        (0, "low"),
+        (0, "minimal"),
         (20, "low"),
-        (30, "medium"),
+        (30, "low"),
         (50, "medium"),
         (60, "high"),
         (70, "high"),
@@ -99,10 +99,10 @@ class TestRiskLevelClassification:
     def test_score_to_level_mapping(self, score, expected_level):
         """Test that scores map to correct risk levels."""
         from core.risk_engine import RiskEngine
-        
+
         engine = RiskEngine()
-        level = engine._get_risk_level(score)
-        
+        level = engine._score_to_level(score)
+
         assert level == expected_level
 
 
@@ -161,96 +161,124 @@ class TestRiskReportGeneration:
 
 class TestEdgeCases:
     """Tests for edge cases in risk calculation."""
-    
+
     def test_empty_clauses_list(self):
         """Test handling of empty clauses list."""
+        import asyncio
         from core.risk_engine import RiskEngine
-        
+
         engine = RiskEngine()
-        result = engine.calculate_contract_risk(
+        result = asyncio.run(engine.calculate_risk_report(
             document_id="test-doc",
             clauses=[],
-            compliance_results=[]
-        )
-        
-        # Should return a valid report with zero risk
-        assert result.overall_risk == 0
+            analyses=[]
+        ))
+
+        assert result.overall_risk_score == 0
         assert result.total_clauses_analyzed == 0
-    
+
     def test_all_high_risk_clauses(self):
         """Test handling when all clauses are high risk."""
+        import asyncio
         from core.risk_engine import RiskEngine
-        from core.clause_extractor import ExtractedClause
-        
+        from core.clause_extractor import ExtractedClause, ClauseType
+        from core.rag_engine import ComplianceAnalysis
+
         engine = RiskEngine()
-        
-        # Create clauses that would be high risk
+
         clauses = [
             ExtractedClause(
+                clause_id=f"c{i}",
+                clause_type=ClauseType.LIABILITY,
+                title="Limitation of Liability",
+                raw_text="Broad liability limitation clause with no cap.",
+                normalized_text="broad liability limitation clause with no cap",
+                page_number=1,
+                start_position=0,
+                end_position=50,
+                confidence=0.9,
+                sub_clauses=[],
+                metadata={}
+            )
+            for i in range(5)
+        ]
+
+        analyses = [
+            ComplianceAnalysis(
                 clause_id=f"c{i}",
                 clause_type="liability",
-                text="Broad liability limitation clause",
-                page_number=1,
+                clause_text="Broad liability limitation clause with no cap.",
+                is_compliant=False,
+                risk_level="high",
+                risk_score=85.0,
+                violated_regulations=["GDPR Article 82"],
+                matched_regulations=[],
+                explanation="Unlimited liability exposure identified.",
+                reasoning_chain=["Clause removes all liability caps."],
+                recommendations=["Introduce a liability cap."],
                 confidence=0.9
             )
             for i in range(5)
         ]
-        
-        # Simulate high risk compliance results
-        compliance_results = [
-            {
-                "clause_id": f"c{i}",
-                "risk_score": 85,
-                "issues": ["Critical issue found"]
-            }
-            for i in range(5)
-        ]
-        
-        result = engine.calculate_contract_risk(
+
+        result = asyncio.run(engine.calculate_risk_report(
             document_id="test-doc",
             clauses=clauses,
-            compliance_results=compliance_results
-        )
-        
-        # Should indicate critical overall risk
-        assert result.overall_risk >= 70
+            analyses=analyses
+        ))
+
+        assert result.overall_risk_score >= 70
         assert result.overall_risk_level in ["high", "critical"]
-    
+
     def test_all_low_risk_clauses(self):
         """Test handling when all clauses are low risk."""
+        import asyncio
         from core.risk_engine import RiskEngine
-        from core.clause_extractor import ExtractedClause
-        
+        from core.clause_extractor import ExtractedClause, ClauseType
+        from core.rag_engine import ComplianceAnalysis
+
         engine = RiskEngine()
-        
-        # Create clauses that would be low risk
+
         clauses = [
             ExtractedClause(
                 clause_id=f"c{i}",
-                clause_type="general",
-                text="Standard general clause",
+                clause_type=ClauseType.COUNTERPARTS,
+                title="Counterparts",
+                raw_text="This agreement may be executed in counterparts.",
+                normalized_text="this agreement may be executed in counterparts",
                 page_number=1,
+                start_position=0,
+                end_position=50,
+                confidence=0.9,
+                sub_clauses=[],
+                metadata={}
+            )
+            for i in range(5)
+        ]
+
+        analyses = [
+            ComplianceAnalysis(
+                clause_id=f"c{i}",
+                clause_type="counterparts",
+                clause_text="This agreement may be executed in counterparts.",
+                is_compliant=True,
+                risk_level="minimal",
+                risk_score=10.0,
+                violated_regulations=[],
+                matched_regulations=[],
+                explanation="Standard boilerplate, fully compliant.",
+                reasoning_chain=["No regulatory issues identified."],
+                recommendations=[],
                 confidence=0.9
             )
             for i in range(5)
         ]
-        
-        # Simulate low risk compliance results
-        compliance_results = [
-            {
-                "clause_id": f"c{i}",
-                "risk_score": 15,
-                "issues": []
-            }
-            for i in range(5)
-        ]
-        
-        result = engine.calculate_contract_risk(
+
+        result = asyncio.run(engine.calculate_risk_report(
             document_id="test-doc",
             clauses=clauses,
-            compliance_results=compliance_results
-        )
-        
-        # Should indicate low overall risk
-        assert result.overall_risk <= 30
-        assert result.overall_risk_level == "low"
+            analyses=analyses
+        ))
+
+        assert result.overall_risk_score <= 30
+        assert result.overall_risk_level in ["low", "minimal"]
